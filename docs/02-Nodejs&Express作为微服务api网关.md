@@ -76,4 +76,6 @@ app.listen(PORT, function(){
 
 ```
 
+- 下一步，就是服务的注册和发现，Nodejs网关将需要增加服务发现的功能
+
 
