@@ -196,32 +196,166 @@ docker run -rm iyihua/java java -version
 
 ## 5. 使用Dockerfile构建镜像
 
+Dockerfile就是把手工构建镜像的过程写成一段自动执行的脚本，最终生成镜像。
+
+### 5.1 Dockerfile构建java镜像
+
+也就是把之前手工构建的java镜像的步骤放到脚本里，脚本如下：
+```
+FROM centos:latest
+MAINTAINER "iyihua"<wanglvyihua@gmail.com>
+ADD jdk-8u65-linux-x64.rpm /usr/local
+RUN rpm -ivh /usr/local/jdk-8u65-linux-x64.rpm
+CMD java -version
+```
+这个Dockerfile顺利运行要求Dockerfile所在宿主机目录含有一个准备好的java安装包jdk-8u65-linux-x64.rpm。
+
+- 如果构建的镜像与之前构建过的镜像的仓库名、标签名相同，之前的镜像的仓库名和标签名就会更新为<none>. 我们可以使用docker tag命令来修改镜像仓库名和标签名。
+```
+docker tag 3443c1097867 iyihua/java:1.0.0
+```
 
 ## 6. 使用Docker Registry管理镜像
+
+我们默认就是从Docker Hub下载公共镜像。官方的Docker Hub也为我们提供了一个私有仓库，可以让内部人员通过这个仓库上传下载内部镜像，不过免费用户只能创建一个私有仓库。
+
+不过，我们可以通过Docker Registry开源项目，在内部搭建一个私有镜像注册中心。
+
+### 6.1 注册登录Docker Hub
+
+通过浏览器注册登录Docker Hub，手动创建一个私有仓库。
+
+然后我们就可以通过客户端login并push镜像到仓库。
+
+登录：
+```
+docker login
+```
+
+推送镜像：
+```
+docker push iyihua/java
+```
+
+### 6.2 搭建Docker Registry
+
+#### 6.2.1 启动
+通过docker本身的镜像，就可以简单的在本地搭建起Docker Registry：
+```
+docker run -d -p 5000:5000 --restart=always --name registry \
+  -v `pwd`/data:/var/lib/registry \
+  registry:2
+```
+这样就会在127.0.0.1:5000的地址启动起Docker Registry服务.
+
+- 参数说明：
+    （1）-d表示后台运行
+    （2）-p是宿主机与容器的端口映射
+    （3）-v是宿主机与容器的目录映射，也即目录挂载
+
+#### 6.2.2 重命名镜像标签
+docker push默认的镜像中心是Docker Hub，没有指明目标地址的镜像，其完整的镜像名称是“docker.io/iyihua/java”.
+如果我们打算将iyihua/java推送到本地的Docker Registry，则需要将镜像名称修改为127.0.0.1:5000/iyihua/java.
+
+使用docker tag命令更名：
+```
+docker tag 3443c1097867 127.0.0.1:5000/iyihua/java
+```
+
+使用docker push命令推送：
+```
+docker push 127.0.0.1:5000/iyihua/java
+```
+
+
 
 
 ## 7. Spring Boot与Docker整合
 
 
+Spring Boot与Docker整合的目标是构建spring boot应用程序时可同时生成Docker镜像，并将此镜像推送至Docker Registry，整个构建过程依然使用maven来完成
+
+现在假定已有一个普通spring boot应用spring-boot-docker.
+
+### 7.1 为spring boot程序添加Dockerfile
+在resources目录下添加Dockerfile：
+```
+FROM java
+MAINTAINER "iyihua"<wanglvyihua@gmail.com>
+ADD spring-boot-docker-1.0.0.jar app.jar
+EXPOSE 8101
+CMD java -jar app.jar
+```
+
+### 7.2 使用maven构建Dockerfile
+在pom文件中添加docker相关插件：
+```
+<plugin>
+    <groupId>com.spotify</groupId>
+    <artifactId>docker-maven-plugin</artifactId>
+    <version>0.4.10</version>
+    <configuration>
+        <imageName>${docker.registry}/${project.groupId}/${project.artifactId}:${project.version}</imageName>
+        <dockerDirectory>${project.build.outputDirectory}</dockerDirectory>
+        <resources>
+            <resource>
+                <!-- <targetPath>/</targetPath> -->
+                <directory>${project.build.directory}</directory>
+                <include>${project.build.finalName}.jar</include>
+            </resource>
+        </resources>
+    </configuration>
+</plugin>
+```
+需要添加的属性配置
+```
+<properties>
+    <docker.registry>127.0.0.1:5000</docker.registry>
+</properties>
+```
+
+### 7.3 构建并推送
+```
+mvn docker:build docker:push
+```
+
+### 7.4 docker容器启动应用
+```
+docker run -d -p 18101:8101 127.0.0.1:5000/com.iyihua/spring-boot-docker:1.0.0
+```
+
+- p参数指明宿主机和容器的端口映射
+- d参数指明要后台运行
+
+### 7.5 调整docker容器内存
+查看docker容器运行情况
+
+运行应用时调整内存限制
+```
+docker run -d -p 18101:8101 -m 512m 127.0.0.1:5000/com.iyihua/spring-boot-docker:1.0.0
+```
+
+- m参数指明内存调整为多少
+
+- demo代码可以在这里获取：
+[spring-boot-docker sample项目](https://github.com/YihuaWanglv/spring-boot-docker)
+
+或者：
+[micoservices/spring-boot-docker](https://github.com/YihuaWanglv/micoservices/tree/master/services/spring-boot-docker)
 
 
+## 附：常见问题：
 
-
-
-
-
-
-## 常见问题：
-
-### docker iptables failed no chain/target/match by that name
+### (1)docker iptables failed no chain/target/match by that name
 
 重启docker即可:
 ```
 systemctl restart docker
 ```
 
-### 当docker run centos，出现：centos exec user process caused "permission denied"
+### (2)当docker run centos，出现：centos exec user process caused "permission denied"
 需要加一个参数：--privileged
+
 结果命令变为：
 ```
 docker run --privileged -i -t centos /bin/bash
