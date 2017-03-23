@@ -329,6 +329,9 @@ docker run -d -p 18101:8101 127.0.0.1:5000/com.iyihua/spring-boot-docker:1.0.0
 
 ### 7.5 调整docker容器内存
 查看docker容器运行情况
+```
+docker stats
+```
 
 运行应用时调整内存限制
 ```
