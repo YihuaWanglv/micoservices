@@ -377,3 +377,9 @@ privileged启动的容器，可以看到很多host上的设备，并且可以执
 ```
 如果总是需要privileged才能正常运行docker，那么可能你安装的docker可能有问题，建议重新安装最新的docker-ce，将不再需要privileged参数.
 ```
+
+### (3)docker build cannot allocate memory
+
+这个问题的终极解决办法，还是重启docker，或者重启服务器；
+
+
