@@ -23,6 +23,10 @@ micoservices, a micoservice framework  technology stack， using spring boot, no
 
 ### 5. Gitlab作为代码仓库
 
+- [05-Gitlab作为代码仓库](https://github.com/YihuaWanglv/micoservices/blob/master/docs/05-Gitlab%E4%BD%9C%E4%B8%BA%E4%BB%A3%E7%A0%81%E4%BB%93%E5%BA%93.md)
+
 ### 6. Jenkins执行自动化的构建
+
+- [06-Jenkins执行自动化的构建](https://github.com/YihuaWanglv/micoservices/blob/master/docs/06-Jenkins%E6%89%A7%E8%A1%8C%E8%87%AA%E5%8A%A8%E5%8C%96%E7%9A%84%E6%9E%84%E5%BB%BA.md)
 
 ## 
