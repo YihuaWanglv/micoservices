@@ -46,3 +46,11 @@ cat ~/.ssh/id_rsa.pub
 ```
 
 
+## 3. more
+
+gitlab运行需要的资源比较多，一个800m的虚拟机用docker跑gitlab比较吃力，经常会出现页面502.建议最低内存是1G。
+
+如果仅仅是个人使用，可以直接使用github代替，或者使用GOGS代替.
+
+
+
